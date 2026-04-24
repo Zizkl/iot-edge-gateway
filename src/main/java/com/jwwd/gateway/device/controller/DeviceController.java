@@ -1,9 +1,8 @@
 package com.jwwd.gateway.device.controller;
 
-import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.jwwd.gateway.common.ApiResponse;
 import com.jwwd.gateway.device.entity.DeviceInfo;
-import com.jwwd.gateway.device.mapper.DeviceInfoMapper;
+import com.jwwd.gateway.device.service.DeviceInfoService;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -14,17 +13,14 @@ import java.util.List;
 @RequestMapping("/api/devices")
 public class DeviceController {
 
-    private final DeviceInfoMapper deviceInfoMapper;
+    private final DeviceInfoService deviceInfoService;
 
-    public DeviceController(DeviceInfoMapper deviceInfoMapper) {
-        this.deviceInfoMapper = deviceInfoMapper;
+    public DeviceController(DeviceInfoService deviceInfoService) {
+        this.deviceInfoService = deviceInfoService;
     }
 
     @GetMapping
     public ApiResponse<List<DeviceInfo>> list() {
-        List<DeviceInfo> devices = deviceInfoMapper.selectList(
-                new LambdaQueryWrapper<DeviceInfo>().orderByDesc(DeviceInfo::getCreateTime)
-        );
-        return ApiResponse.ok(devices);
+        return ApiResponse.ok(deviceInfoService.listDevices());
     }
 }
