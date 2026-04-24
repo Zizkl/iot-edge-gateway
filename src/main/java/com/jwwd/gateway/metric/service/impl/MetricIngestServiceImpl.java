@@ -1,8 +1,6 @@
 package com.jwwd.gateway.metric.service.impl;
 
 import com.baomidou.mybatisplus.core.toolkit.Wrappers;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.jwwd.gateway.alarm.service.AlarmCheckService;
 import com.jwwd.gateway.common.util.HashUtils;
 import com.jwwd.gateway.metric.entity.DeviceMetricData;
@@ -10,8 +8,6 @@ import com.jwwd.gateway.metric.enums.MetricSyncStatus;
 import com.jwwd.gateway.metric.service.DeviceMetricDataService;
 import com.jwwd.gateway.metric.service.MetricIngestService;
 import com.jwwd.gateway.protocol.DeviceMessage;
-import com.jwwd.gateway.sync.entity.SyncTask;
-import com.jwwd.gateway.sync.enums.SyncTaskStatus;
 import com.jwwd.gateway.sync.enums.SyncTaskType;
 import com.jwwd.gateway.sync.service.SyncTaskService;
 import org.springframework.dao.DuplicateKeyException;
@@ -27,16 +23,13 @@ public class MetricIngestServiceImpl implements MetricIngestService {
     private final DeviceMetricDataService metricDataService;
     private final SyncTaskService syncTaskService;
     private final AlarmCheckService alarmCheckService;
-    private final ObjectMapper objectMapper;
 
     public MetricIngestServiceImpl(DeviceMetricDataService metricDataService,
                                    SyncTaskService syncTaskService,
-                                   AlarmCheckService alarmCheckService,
-                                   ObjectMapper objectMapper) {
+                                   AlarmCheckService alarmCheckService) {
         this.metricDataService = metricDataService;
         this.syncTaskService = syncTaskService;
         this.alarmCheckService = alarmCheckService;
-        this.objectMapper = objectMapper;
     }
 
     @Override
@@ -52,7 +45,7 @@ public class MetricIngestServiceImpl implements MetricIngestService {
             );
         }
 
-        createMetricSyncTask(metricData);
+        syncTaskService.createPendingTask(SyncTaskType.METRIC, metricData.getId(), metricData);
         alarmCheckService.checkMetric(metricData);
         return metricData;
     }
@@ -84,24 +77,4 @@ public class MetricIngestServiceImpl implements MetricIngestService {
                 + rawPayload);
     }
 
-    private void createMetricSyncTask(DeviceMetricData metricData) {
-        SyncTask syncTask = new SyncTask();
-        syncTask.setTaskType(SyncTaskType.METRIC.getCode());
-        syncTask.setBusinessId(metricData.getId());
-        syncTask.setIdempotentKey(SyncTaskType.METRIC.getCode() + ":" + metricData.getId());
-        syncTask.setPayload(toJson(metricData));
-        syncTask.setStatus(SyncTaskStatus.PENDING.getCode());
-        syncTask.setRetryCount(0);
-        syncTask.setMaxRetryCount(5);
-        syncTask.setNextRetryTime(LocalDateTime.now());
-        syncTaskService.save(syncTask);
-    }
-
-    private String toJson(DeviceMetricData metricData) {
-        try {
-            return objectMapper.writeValueAsString(metricData);
-        } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("Failed to serialize metric sync payload", ex);
-        }
-    }
 }
