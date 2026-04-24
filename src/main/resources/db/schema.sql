@@ -1,0 +1,1 @@
+-- See the root-level iot_edge_gateway_schema.sql file for the full database schema.
