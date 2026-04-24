@@ -12,4 +12,6 @@ public interface AlarmEventService extends IService<AlarmEvent> {
     Optional<AlarmEvent> findActiveAlarm(String deviceCode, String metricCode);
 
     AlarmEvent createAlarmEvent(DeviceMetricData metricData, AlarmRule alarmRule);
+
+    AlarmEvent recoverAlarmEvent(AlarmEvent alarmEvent, DeviceMetricData metricData);
 }

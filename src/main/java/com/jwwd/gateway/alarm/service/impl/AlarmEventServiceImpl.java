@@ -48,6 +48,17 @@ public class AlarmEventServiceImpl extends ServiceImpl<AlarmEventMapper, AlarmEv
         return alarmEvent;
     }
 
+    @Override
+    public AlarmEvent recoverAlarmEvent(AlarmEvent alarmEvent, DeviceMetricData metricData) {
+        alarmEvent.setAlarmStatus(AlarmStatus.RECOVERED.getCode());
+        alarmEvent.setRecoverValue(metricData.getMetricValue());
+        alarmEvent.setRecoverTime(metricData.getCollectTime());
+        alarmEvent.setLastMetricDataId(metricData.getId());
+        alarmEvent.setSyncStatus(MetricSyncStatus.PENDING.getCode());
+        updateById(alarmEvent);
+        return alarmEvent;
+    }
+
     private String generateAlarmNo() {
         return "AL" + LocalDateTime.now().format(ALARM_NO_TIME_FORMATTER)
                 + UUID.randomUUID().toString().replace("-", "").substring(0, 8).toUpperCase();
